@@ -25,8 +25,49 @@ namespace ETF_Compare_2._0
         public Form1()
         {
             InitializeComponent();
+
+            // --- Log: 紀錄程式啟動 ---
+            WriteLog("程式啟動 - ETF Analyzer v1.0 Ready.");
+            // --- 新增這段：啟用拖放功能 ---
+
+            // 1. 開啟文字框的拖放屬性
+            txtYesterday.AllowDrop = true;
+            txtToday.AllowDrop = true;
+
+            // 2. 綁定事件 (兩個框框共用同一個處理邏輯)
+            // 當檔案拖進來時
+            txtYesterday.DragEnter += Txt_DragEnter;
+            txtToday.DragEnter += Txt_DragEnter;
+
+            // 當檔案放開時
+            txtYesterday.DragDrop += Txt_DragDrop;
+            txtToday.DragDrop += Txt_DragDrop;
         }
-        // --- 4. 讀取 Excel 方法 (封裝好的強大邏輯) ---
+
+        // --- ★ 新增功能: 寫入 Log 檔案的方法 ---
+        private void WriteLog(string message)
+        {
+            try
+            {
+                // 1. 設定 Logs 資料夾路徑 (在 exe 旁邊)
+                string logDir = Path.Combine(Application.StartupPath, "Logs");
+                if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
+
+                // 2. 設定檔名 (每天一個檔案，例如 Log_20231025.txt)
+                string logPath = Path.Combine(logDir, $"Log_{DateTime.Now:yyyyMMdd}.txt");
+
+                // 3. 組合 Log 內容: [時間] 訊息
+                string logContent = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
+
+                // 4. 附加寫入檔案 (Append)
+                File.AppendAllText(logPath, logContent, Encoding.UTF8);
+            }
+            catch
+            {
+                // 如果連 Log 都寫不進去 (例如權限不足)，就默默略過，不要讓程式崩潰
+            }
+        }
+        // --- 4. 讀取 Excel 方法 ---
         private List<StockItem> ReadXlsx(string filePath)
         {
             var list = new List<StockItem>();
@@ -103,16 +144,19 @@ namespace ETF_Compare_2._0
             if (string.IsNullOrEmpty(pathYesterday) || !File.Exists(pathYesterday))
             {
                 MessageBox.Show("請選擇有效的昨日檔案路徑！", "提醒", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                WriteLog("警告: 昨日路徑無效或空白"); // Log
                 return;
             }
             if (string.IsNullOrEmpty(pathToday) || !File.Exists(pathToday))
             {
                 MessageBox.Show("請選擇有效的今日檔案路徑！", "提醒", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                WriteLog("警告: 今日路徑無效或空白"); // Log
                 return;
             }
 
             try
             {
+                WriteLog("開始執行比對分析..."); // Log                
                 btnCompare.Enabled = false; // 運算時禁用按鈕
                 btnCompare.Text = "分析中...";
 
@@ -120,9 +164,13 @@ namespace ETF_Compare_2._0
                 var yesterdayData = await Task.Run(() => ReadXlsx(pathYesterday));
                 var todayData = await Task.Run(() => ReadXlsx(pathToday));
 
+                WriteLog($"檔案讀取完成。昨日筆數: {yesterdayData.Count}, 今日筆數: {todayData.Count}"); // Log
+
                 if (yesterdayData.Count == 0 || todayData.Count == 0)
                 {
+                    string errMsg = "讀取失敗，資料筆數為 0，請確認 Excel 內容。";
                     MessageBox.Show("讀取失敗，請確認 Excel 檔案內容是否包含「股票代號」！");
+                    WriteLog($"錯誤: {errMsg}"); // Log
                     return;
                 }
 
@@ -154,6 +202,8 @@ namespace ETF_Compare_2._0
                     }
                 }
 
+
+                WriteLog($"比對邏輯完成，發現 {changeCount} 筆變動。"); // Log
                 // 存檔到桌面
                 // 修正後的路徑設定
                 string outputDir = Path.Combine(Application.StartupPath, "ETF_Output");
@@ -167,6 +217,7 @@ namespace ETF_Compare_2._0
                 sb.AppendLine($"報告存於：{outputPath}");
                 // 5. 寫入檔案
                 File.WriteAllText(outputPath, sb.ToString(), Encoding.UTF8);
+                WriteLog($"報告已存檔: {outputPath}"); // Log
 
                 // 6. 準備訊息內容 (合併 成功通知 + 詢問)
                 string message = $"比對完成！\n" +
@@ -184,24 +235,24 @@ namespace ETF_Compare_2._0
                 {
                     // 只有當使用者選「是」的時候，才開啟資料夾
                     System.Diagnostics.Process.Start("explorer.exe", outputDir);
+                    WriteLog("使用者選擇開啟資料夾。"); // Log
                 }
 
                 // 如果選「否」，程式就會直接往下執行 (也就是不做任何事)，不會打開資料夾
             }
             catch (Exception ex)
             {
+                WriteLog($"[嚴重錯誤 Exception] {ex.Message}\n堆疊: {ex.StackTrace}");
                 MessageBox.Show($"執行發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
                 btnCompare.Enabled = true;
                 btnCompare.Text = "比對";
+                txtYesterday.Text = "";
+                txtToday.Text = "";
+                WriteLog("作業結束，重置介面。"); // Log
             }
-            // 1. 清除昨日路徑文字框
-            txtYesterday.Text = "";
-
-            // 2. 清除今日路徑文字框
-            txtToday.Text = "";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -209,12 +260,52 @@ namespace ETF_Compare_2._0
             txtYesterday.Text = ""; // 清空文字
                                     // txtYesterday.Clear(); // 用這行也可以，效果一樣
             txtYesterday.Focus();  // 讓游標跳回格子裡閃爍
+            WriteLog("使用者手動清除昨日路徑"); // Log
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
             txtToday.Text = ""; // 清空文字
             txtToday.Focus();  // 讓游標跳回格子裡閃爍
+            WriteLog("使用者手動清除今日路徑"); // Log
         }
+        // --- 拖放功能區域 Start ---
+
+// 當滑鼠拖著東西「進入」文字框範圍時觸發
+private void Txt_DragEnter(object sender, DragEventArgs e)
+{
+    // 檢查拖進來的是不是「檔案」(忽略網頁圖片或純文字)
+    if (e.Data.GetDataPresent(DataFormats.FileDrop))
+    {
+        // 如果是檔案，把滑鼠游標變成「複製」的圖示 (會有一個小 + 號)
+        e.Effect = DragDropEffects.Copy;
+    }
+    else
+    {
+        // 如果不是檔案，顯示禁止圖示
+        e.Effect = DragDropEffects.None;
+    }
+}
+
+// 當滑鼠在文字框範圍「放開」時觸發
+private void Txt_DragDrop(object sender, DragEventArgs e)
+{
+    // 取得拖放進來的檔案路徑清單 (因為可以一次選很多檔)
+    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+    if (files != null && files.Length > 0)
+    {
+        // 抓取觸發這個事件的文字框 (是昨日還是今日？)
+        TextBox targetBox = sender as TextBox;
+
+        if (targetBox != null)
+        {
+            // 只取第一個檔案的路徑填入
+            targetBox.Text = files[0];
+            WriteLog($"使用者拖放載入檔案: {files[0]}"); // Log
+        }
+    }
+}
+// --- 拖放功能區域 End ---
     }
 }
