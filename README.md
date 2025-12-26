@@ -1,59 +1,75 @@
-# 📈 ETF Portfolio Analyzer (ETF 持股變動比對系統)
-一個高效能的 Windows 桌面應用程式，專為投資人與分析師設計。透過自動化演算法，在秒級內比對 ETF 兩日成分股的權重與持股變化，解決人工比對耗時且易錯的痛點。
+# ETF Portfolio Analyzer (ETF 持股變動比對系統)
 
-## ✨ 核心功能 (Key Features)
+[下載 Releases](https://github.com/alexshao0807/ETF-Analyzer/releases) | [技術堆疊](#技術堆疊) | [使用說明](#使用說明) | [開發紀錄](#開發紀錄) | [作者](#作者)
 
-- **🚀 比對演算法 ($O(1)$)**
-  - 採用 Hash-based 資料結構 (Dictionary) 優化搜尋邏輯，即使處理數萬筆成分股資料也能瞬間完成，大幅優於傳統巢狀迴圈 ($O(N^2)$)。
-  
-- **⚡ 非同步多執行緒 (Async/Await)**
-  - 導入非同步設計模式，確保在讀取大型 Excel 檔案或進行複雜運算時，UI 介面依然流暢不卡頓。
-
-- **🖱️ 直覺的操作體驗 (User Experience)**
-  - **瀏覽路徑位置按鈕**：直接將 Excel 檔案透過瀏覽位置視窗選取。
-  - **自動化報告**：分析完成後自動生成 `.txt` 變動報表，並建立專屬資料夾管理。
-  - **防呆機制**：包含路徑檢查、一鍵清除輸入、以及執行後的自動導引視窗。
-
-- **📊 廣泛的檔案支援**
-  - 完整支援 `.xlsx` (Excel) 格式讀取與解析 (基於 ClosedXML)。
-
-## 🛠️ 技術堆疊 (Tech Stack)
-
-- **語言**: C# (.NET Framework 4.7.2)
-- **框架**: Windows Forms (WinForms)
-- **套件**: 
-  - `ClosedXML` (Excel 資料處理)
-  - `System.Threading.Tasks` (非同步處理)
-- **工具**: Visual Studio 2022, Git
-
-## 📥 安裝與執行 (Installation)
-
-1. 前往本專案的 [**Releases 頁面**](https://github.com/alexshao0807/ETF-Analyzer/releases)。
-2. 下載最新的 **`ETF_Analyzer_v1.0.zip`** (請勿只下載 Source code)。
-3. 將壓縮檔 **解壓縮** 至桌面或任意資料夾。
-4. 雙擊執行 `ETF_Compare.exe`。
-
-> **⚠️ 注意：安全性警告** > 由於本軟體無數位簽章，Windows Defender 可能會跳出藍色警告視窗。  
-> **解決方法**：點擊「其他資訊 (More info)」→ 選擇「仍要執行 (Run anyway)」即可。
-
-## 📖 使用說明 (Usage)
-
-1. **載入檔案**：點擊「瀏覽」或直接將昨日/今日的 ETF 持股 Excel 檔拖入對應欄位。
-2. **執行分析**：點擊「比對」按鈕。
-3. **查看報告**：程式將自動計算新增持股與股數變動，並詢問是否開啟報告資料夾。
-4. **重置**：點擊「清除」按鈕即可準備下一次分析。
-
-## 📝 開發紀錄 (Release Notes)
-
-### v1.0.0 - Initial Release
-- 完成核心比對功能上線。
-- 實作 Release 模式編譯與打包。
-- 優化例外處理 (Exception Handling) 與使用者提示訊息。
-
-## 👤 作者 (Author)
-
-**Alex hao**
-- GitHub: [@alexshao0807](https://github.com/alexshao0807)
+ETF Portfolio Analyzer 是一個針對 Windows 環境開發的 ETF 成分股比對工具。本專案核心目標在於透過高效能演算法，解決分析師在處理每日成分股權重異動時，因人工比對 Excel 所導致的低效與誤差問題。
 
 ---
-*如果你覺得這個專案有幫助，歡迎幫我按一顆 ⭐️ 星星！*
+
+## 項目定位與邏輯
+
+在量化分析中，成分股的微量調倉往往隱含法人的交易意圖。本工具不進行複雜的預測，而是專注於「數據分類與邊界界定」。透過 $O(1)$ 的雜湊比對邏輯，將兩份時間序列的數據進行精確差分，並將結果結構化輸出。
+
+### 核心特性
+
+* 效能優化：核心演算法基於 Hash-based Dictionary，處理萬級數據維持常數時間複雜度，避開 $O(N^2)$ 的效能瓶頸。
+* 非同步機制：採用 .NET Async/Await 模式處理 I/O 密集型任務，確保 Excel 讀取期間 UI 執行緒不阻塞。
+* 自動化報表：比對後自動生成帶有時間戳記的 .txt 報告，支援自動導引至輸出目錄。
+* 健壯性設計：內置 Log 系統與 Exception Handling，涵蓋路徑檢查與非法格式防呆。
+
+---
+
+## 技術堆疊
+
+* Runtime: .NET Framework 4.7.2
+* Language: C#
+* Library: 
+    * ClosedXML: OpenXML 封裝庫，處理 Excel XML 數據。
+    * System.Threading.Tasks: 異步並發控制。
+* Build Tool: Visual Studio 2022
+
+---
+
+## 安裝與執行
+
+1. 於本專案 Releases 處下載 ETF_Analyzer_v2.0.zip。
+2. 解壓縮至本地目錄。
+3. 執行 ETF_Compare.exe。
+
+註：由於未進行數位簽章，Windows Defender 若出現警告，請點選「其他資訊」並選擇「仍要執行」。
+
+---
+
+## 使用說明
+
+1. 數據導入：將昨日與今日的成分股 Excel 檔案拖入程式介面或手動選取路徑。
+2. 分析比對：點擊「比對」按鈕，程式將進行差分運算（含新增、股數變動）。
+3. 結果導出：運算完成後會生成報告資料夾，內含詳細變動明細。
+4. 清理：點擊「清除」按鈕重置文字框內容。
+
+---
+
+## 開發紀錄
+
+### v2.0.0
+- 新增：Drag & Drop 檔案拖放支援。
+- 新增：Log 系統，記錄執行過程與非預期錯誤。
+
+### v1.0.0
+- 實作 O(1) 比對算法。
+- 完成 Release 模式封裝與打包。
+
+---
+
+## 免責聲明
+
+* 本項目僅供技術交流與數據研究使用，不構成任何投資建議。
+* 投資者應自行負擔損益，作者不對使用本軟體產生的任何損失負責。
+* 數據計算結果僅供參考，請以各 ETF 發行官方公佈之數據為準。
+
+---
+
+## 作者
+
+Alex Hao
+- GitHub: [@alexshao0807](https://github.com/alexshao0807)
