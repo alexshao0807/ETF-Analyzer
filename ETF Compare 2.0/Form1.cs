@@ -122,7 +122,7 @@ namespace ETF_Compare_2._0
                     return;
                 }
 
-                // 修正後的路徑設定
+                // 修正後的路徑設定(拿取 exe 同一層的資料夾路徑)
                 string outputDir = Path.Combine(Application.StartupPath, "ETF_Output");
 
 
