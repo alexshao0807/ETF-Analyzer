@@ -24,6 +24,7 @@ namespace ETF_Compare_2._0.Servcies
 
                 foreach (var row in rows)
                 {
+                    //row.cell(1) 代表第一欄
                     string cell1 = row.Cell(1).GetValue<string>().Trim();
                     if (!isHeaderFound)
                     {
@@ -37,15 +38,24 @@ namespace ETF_Compare_2._0.Servcies
 
                     // 解析股數
                     string rawShares = row.Cell(3).GetValue<string>();
+                    //Regex.Replace 用來移除非數字(^\d)和小數點(.)的字元
+                    //ex "1,234,567" 會變成 "1234567"
                     decimal.TryParse(Regex.Replace(rawShares, @"[^\d.]", ""), out decimal shares);
 
-                    list.Add(new StockItem
-                    {
-                        Symbol = symbol,
-                        Name = row.Cell(2).GetValue<string>().Trim(),
-                        Shares = shares,
-                        Weight = row.Cell(4).GetValue<string>().Trim()
-                    });
+                    StockItem item = new StockItem();
+                    item.Symbol = symbol;
+                    item.Name = row.Cell(2).GetValue<string>().Trim();
+                    item.Shares = shares;
+                    item.Weight = row.Cell(4).GetValue<string>().Trim();
+                    list.Add(item);
+
+                    //list.Add(new StockItem
+                    //{
+                    //    Symbol = symbol,
+                    //    Name = row.Cell(2).GetValue<string>().Trim(),
+                    //    Shares = shares,
+                    //    Weight = row.Cell(4).GetValue<string>().Trim()
+                    //});
                 }
             }
             return list;

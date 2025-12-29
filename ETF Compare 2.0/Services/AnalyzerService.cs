@@ -82,12 +82,20 @@ namespace ETF_Compare_2._0.Servcies
                              $"報告已儲存於：\n{outputPath}\n\n" +
                              $"請問是否要立即開啟輸出資料夾？";
 
-            return new AnalysisResult
-            {
-                ReportContent = sb.ToString(),
-                ChangeCount = changeCount,
-                OutputPath = outputPath
-            };
+            AnalysisResult result = new AnalysisResult();
+
+            result.ReportContent = sb.ToString();
+            result.ChangeCount = changeCount;
+            result.OutputPath = outputPath;
+           
+            return result;
+
+            //return new AnalysisResult
+            //{
+            //    ReportContent = sb.ToString(),
+            //    ChangeCount = changeCount,
+            //    OutputPath = outputPath
+            //};
         }
     }
 }
