@@ -13,6 +13,8 @@ namespace ETF_Compare_2._0.Models
             public string Name { get; set; }
             public decimal Shares { get; set; }
             public string Weight { get; set; }
+
+            public decimal Price { get; set; }
         }
 
     

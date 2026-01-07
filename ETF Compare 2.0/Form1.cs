@@ -124,15 +124,31 @@ namespace ETF_Compare_2._0
 
                 // 修正後的路徑設定(拿取 exe 同一層的資料夾路徑)
                 string outputDir = Path.Combine(Application.StartupPath, "ETF_Output");
+                DateTime targetDate = DateTime.Today; // 預設先抓今天 (如果檔名沒日期的話)
+                string fileName = Path.GetFileNameWithoutExtension(pathToday); // 取得 "ETF_Portfolio_Composition_File_20260105"
 
+                var match = System.Text.RegularExpressions.Regex.Match(fileName, @"20\d{6}");
 
-
+                if (match.Success)
+                {
+                    string dateStr = match.Value; // 抓到 "20260105"
+                    _logger.Write($"[系統] 檔名日期解析成功，基準日設定為: {targetDate:yyyy-MM-dd}");
+                    // 嘗試將字串轉成真正的 DateTime 物件
+                    if (DateTime.TryParseExact(dateStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+                    {
+                        targetDate = parsedDate;
+                        _logger.Write($"成功解析檔案日期，將查詢：{targetDate:yyyy-MM-dd} 的股價");
+                    }
+                }
+                else
+                {
+                    _logger.Write("[系統警告] 檔名中找不到日期，將使用「今天」作為查詢基準。");
+                }
+                _logger.Write("開始比對並聯網抓價...");
                 // 7. 彈出 Yes/No 選擇視窗
                 // MessageBoxButtons.YesNo 會顯示「是」與「否」按鈕
                 // MessageBoxIcon.Question 會顯示問號圖示
-                var result = await Task.Run(() =>
-                    _analyzerService.CompareAndGenerateReport(yesterdayData, todayData, pathYesterday, pathToday, outputDir)
-                );
+                var result = await _analyzerService.CompareAndGenerateReport(yesterdayData, todayData, pathYesterday, pathToday, outputDir, targetDate);
 
                 _logger.Write($"比對完成，變動數: {result.ChangeCount}");
 
@@ -211,6 +227,8 @@ private void Txt_DragDrop(object sender, DragEventArgs e)
         }
     }
 }
-// --- 拖放功能區域 End ---
+
+        
+        // --- 拖放功能區域 End ---
     }
 }
