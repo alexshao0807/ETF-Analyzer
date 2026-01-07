@@ -26,7 +26,7 @@ namespace ETF_Compare_2._0.Servcies
 
         // 1. 宣告抓價服務
         private readonly PriceService _priceService = new PriceService();
-        public async Task<AnalysisResult>CompareAndGenerateReport(List<StockItem> yesterdayData, List<StockItem> todayData, string pathYesterday, string pathToday, string outputDir, DateTime date)
+        public async Task<AnalysisResult>CompareAndGenerateReport(List<StockItem> yesterdayData, List<StockItem> todayData, string pathYesterday, string pathToday, string outputDir, DateTime date, IProgress<(int current, int total, string message)> progress)
         {
 
             
@@ -42,8 +42,15 @@ namespace ETF_Compare_2._0.Servcies
 
             // 2. 核心比對
             int changeCount = 0;
+
+            // 1. 計算總共有多少筆資料要處理 (用來設定進度條的最大值)
+            int totalItems = todayData.Count;
+            int currentItemIndex = 0;
             foreach (var current in todayData)
             {
+                currentItemIndex++;
+                // 這裡會傳回：(目前第幾筆, 總共幾筆, 目前正在處理哪支股票)
+                progress?.Report((currentItemIndex, totalItems, $"正在分析: {current.Name} ({current.Symbol})..."));
                 // 用來暫存這次計算的金額
                 decimal estimatedCost = 0;
                 decimal currentPrice = 0;

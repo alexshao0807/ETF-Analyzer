@@ -145,26 +145,52 @@ namespace ETF_Compare_2._0
                     _logger.Write("[系統警告] 檔名中找不到日期，將使用「今天」作為查詢基準。");
                 }
                 _logger.Write("開始比對並聯網抓價...");
+
+
+                // 這段 lambda 語法定義了：當 Service 回報進度時，UI 要怎麼變
+                var progressHandler = new Progress<(int current, int total, string message)>(status =>
+                {
+                    progressBar1.Maximum = status.total;  // 設定最大值
+                    progressBar1.Value = status.current;  // 設定目前進度
+                    lblStatus.Text = status.message;      // 讓 Label 顯示「正在分析: 台積電...」
+                });
                 // 7. 彈出 Yes/No 選擇視窗
                 // MessageBoxButtons.YesNo 會顯示「是」與「否」按鈕
                 // MessageBoxIcon.Question 會顯示問號圖示
-                var result = await _analyzerService.CompareAndGenerateReport(yesterdayData, todayData, pathYesterday, pathToday, outputDir, targetDate);
+               
+               
+                var result = await _analyzerService.CompareAndGenerateReport(yesterdayData, todayData, pathYesterday, pathToday, outputDir, targetDate, progressHandler);
 
                 _logger.Write($"比對完成，變動數: {result.ChangeCount}");
+                // 先暫停 0.1 秒，讓那個「遲到的最後一筆進度更新」先跑完
+                // 這樣它才不會覆蓋掉我們後面要寫的「分析完畢」
+                await Task.Delay(100);
+
+                // 現在確認沒有遲到的訊號了，我們設定最終狀態
+                lblStatus.Text = "分析完畢";
+                progressBar1.Value = 0;    // 清空進度條
+
+                //強制立刻重畫 (確保 MessageBox 跳出前，使用者看到的是乾淨的畫面)
+                lblStatus.Refresh();
+                progressBar1.Refresh();
+
+                // 再給一點點時間確保繪圖完成
+                await Task.Delay(50);
 
                 // 8. 判斷使用者的選擇
                 string msg = $"比對完成！\n發現 {result.ChangeCount} 筆變動。\n報告存於：\n{result.OutputPath}\n\n是否開啟資料夾？";
-                if (MessageBox.Show(msg, "成功", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+               if (MessageBox.Show(msg, "成功", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    System.Diagnostics.Process.Start("explorer.exe", outputDir);
+                        System.Diagnostics.Process.Start("explorer.exe", outputDir);
                 }
-
+               
                 // 如果選「否」，程式就會直接往下執行 (也就是不做任何事)，不會打開資料夾
             }
             catch (Exception ex)
             {
                 _logger.Write($"[嚴重錯誤 Exception] {ex.Message}\n堆疊: {ex.StackTrace}");
                 MessageBox.Show($"執行發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "發生錯誤"; // 錯誤時顯示
             }
             finally
             {
@@ -173,6 +199,7 @@ namespace ETF_Compare_2._0
                 txtYesterday.Text = "";
                 txtToday.Text = "";
                 _logger.Write("作業結束，重置介面。"); // Log
+                progressBar1.Value = 0;
             }
         }
 
@@ -228,7 +255,12 @@ private void Txt_DragDrop(object sender, DragEventArgs e)
     }
 }
 
-        
+        private void progressBar1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+
         // --- 拖放功能區域 End ---
     }
 }
